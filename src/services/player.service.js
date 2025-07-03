@@ -95,15 +95,17 @@ class PlayerService {
     });
   }
 
-  static async deletePlayer(id) {
-    const player = await prisma.player.findUnique({ where: { id: Number(id) } });
-    if (!player) throw new Error('Player not found');
+ static async deletePlayer(id) {
+  const player = await prisma.player.findUnique({ where: { id: Number(id) } });
+  if (!player) throw new Error('Player not found');
 
-    // Supprimer les stats associées
-    await prisma.playerStats.delete({ where: { id: player.statsId } });
-    // Supprimer le joueur
-    return prisma.player.delete({ where: { id: Number(id) } });
-  }
+  await prisma.$transaction([
+    prisma.player.delete({ where: { id: Number(id) } }),
+    prisma.playerStats.delete({ where: { id: player.statsId } })
+  ]);
+
+  return { message: 'Deleted successfully' };
+}
 }
 
 export default PlayerService;
