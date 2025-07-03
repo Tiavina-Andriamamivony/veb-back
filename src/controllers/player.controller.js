@@ -1,76 +1,66 @@
-import playerService from "../services/player.service.js";
+import PlayerService from '../services/player.service.js';
 
-const getAll = async (req, res) => {
-  try {
-    const { page = 1, limit = 10 } = req.query;
-    const data = await playerService.getAll(Number(page), Number(limit));
-    res.json(data);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+class PlayerController {
+  static async create(req, res) {
+    try {
+      const player = await PlayerService.createPlayer(req.body);
+      res.status(201).json(player);
+    } catch (err) {
+      console.error(err);
+      res.status(400).json({ message: err.message });
+    }
   }
-};
 
-const getOne = async (req, res) => {
-  try {
-    const player = await playerService.getOne(Number(req.params.id));
-    res.json(player);
-  } catch (err) {
-    res.status(404).json({ error: "Joueur non trouvé" });
+  static async list(req, res) {
+    try {
+      const { page, limit, category, search, sortBy, sortOrder } = req.query;
+      const result = await PlayerService.getPlayers({
+        page: Number(page) || 1,
+        limit: Number(limit) || 10,
+        category,
+        search,
+        sortBy,
+        sortOrder
+      });
+      res.json(result);
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ message: 'Internal Server Error' });
+    }
   }
-};
 
-const create = async (req, res) => {
-  try {
-    const player = await playerService.create(req.body);
-    res.status(201).json(player);
-  } catch (err) {
-    res.status(400).json({ error: err.message });
+  static async getOne(req, res) {
+    try {
+      const player = await PlayerService.getPlayerById(req.params.id);
+      if (!player) return res.status(404).json({ message: 'Player not found' });
+      res.json(player);
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ message: 'Internal Server Error' });
+    }
   }
-};
 
-const update = async (req, res) => {
-  try {
-    const player = await playerService.update(Number(req.params.id), req.body);
-    res.json(player);
-  } catch (err) {
-    res.status(400).json({ error: err.message });
+  static async update(req, res) {
+    try {
+      const player = await PlayerService.updatePlayer(req.params.id, req.body);
+      res.json(player);
+    } catch (err) {
+      console.error(err);
+      if (err.message === 'Player not found') return res.status(404).json({ message: err.message });
+      res.status(400).json({ message: err.message });
+    }
   }
-};
 
-const remove = async (req, res) => {
-  try {
-    await playerService.remove(Number(req.params.id));
-    res.status(204).end();
-  } catch (err) {
-    res.status(404).json({ error: "Joueur non trouvé" });
+  static async delete(req, res) {
+    try {
+      await PlayerService.deletePlayer(req.params.id);
+      res.status(204).send();
+    } catch (err) {
+      console.error(err);
+      if (err.message === 'Player not found') return res.status(404).json({ message: err.message });
+      res.status(400).json({ message: err.message });
+    }
   }
-};
+}
 
-const checkLicense = async (req, res) => {
-  try {
-    const status = await playerService.checkLicense(Number(req.params.id));
-    res.json(status);
-  } catch (err) {
-    res.status(400).json({ error: err.message });
-  }
-};
-
-const getTopByStat = async (req, res) => {
-  try {
-    const { statKey = "points", limit = 5 } = req.query;
-    const data = await playerService.getTopByStat(statKey, Number(limit));
-    res.json(data);
-  } catch (err) {
-    res.status(400).json({ error: err.message });
-  }
-};
-
-export default {
-  getAll,
-  getOne,
-  create,
-  update,
-  remove,
-  checkLicense,
-  getTopByStat
-};
+export default PlayerController;

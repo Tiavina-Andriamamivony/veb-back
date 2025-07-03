@@ -1,16 +1,12 @@
-import express from "express";
-import playerController from "../controllers/player.controller.js";
+import express from 'express';
+import PlayerController from '../controllers/player.controller.js';
 
 const router = express.Router();
 
-router.get("/", playerController.getAll);
-router.get("/:id", playerController.getOne);
-router.post("/", playerController.create);
-router.put("/:id", playerController.update);
-router.delete("/:id", playerController.remove);
-
-// Bonus
-router.get("/:id/license-status", playerController.checkLicense);
-router.get("/stats/top", playerController.getTopByStat);
+router.post('/', PlayerController.create);
+router.get('/', PlayerController.list);
+router.get('/:id', PlayerController.getOne);
+router.put('/:id', PlayerController.update);
+router.delete('/:id', PlayerController.delete);
 
 export default router;

@@ -1,99 +1,109 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 
-const getAll = async (page = 1, limit = 10) => {
-  const skip = (page - 1) * limit;
-  const [players, total] = await Promise.all([
-    prisma.player.findMany({
+class PlayerService {
+  static async createPlayer(data) {
+    // On calcule la date de fin de licence à 4 ans
+    const licenseEnd = new Date();
+    licenseEnd.setFullYear(licenseEnd.getFullYear() + 4);
+
+    // Création des stats d’abord
+    const stats = await prisma.playerStats.create({
+      data: {
+        shoot: data.stats.shoot,
+        dribble: data.stats.dribble,
+        defense: data.stats.defense,
+        finish: data.stats.finish,
+        speed: data.stats.speed,
+        strength: data.stats.strength,
+        weight: data.stats.weight,
+        jump: data.stats.jump,
+        iq: data.stats.iq,
+      }
+    });
+
+    // Puis création du joueur
+    return prisma.player.create({
+      data: {
+        firstName: data.firstName,
+        lastName: data.lastName,
+        category: data.category,
+        statsId: stats.id,
+        photoUrl: data.photoUrl || null,
+        licenseEnd: licenseEnd,
+      }
+    });
+  }
+
+  static async getPlayers({ page = 1, limit = 10, category, search, sortBy = 'createdAt', sortOrder = 'desc' }) {
+    const skip = (page - 1) * limit;
+    const where = {};
+
+    if (category) {
+      where.category = category;
+    }
+
+    if (search) {
+      where.OR = [
+        { firstName: { contains: search, mode: 'insensitive' } },
+        { lastName: { contains: search, mode: 'insensitive' } }
+      ];
+    }
+
+    const players = await prisma.player.findMany({
+      where,
+      include: { stats: true },
+      orderBy: { [sortBy]: sortOrder },
       skip,
       take: limit,
-      orderBy: { createdAt: "desc" }
-    }),
-    prisma.player.count()
-  ]);
+    });
 
-  return {
-    players,
-    total,
-    page,
-    totalPages: Math.ceil(total / limit)
-  };
-};
+    const total = await prisma.player.count({ where });
 
-const getOne = async (id) => {
-  const player = await prisma.player.findUnique({ where: { id } });
-  if (!player) throw new Error("Not found");
-  return player;
-};
+    return { players, total, page, limit };
+  }
 
-const create = async (data) => {
-  const licenseEnd = new Date();
-  licenseEnd.setFullYear(licenseEnd.getFullYear() + 4);
+  static async getPlayerById(id) {
+    return prisma.player.findUnique({
+      where: { id: Number(id) },
+      include: { stats: true },
+    });
+  }
 
-  return await prisma.player.create({
-    data: {
-      firstName: data.firstName,
-      lastName: data.lastName,
-      category: data.category,
-      stats: data.stats || [],
-      photoUrl: data.photoUrl || null,
-      licenseEnd
+  static async updatePlayer(id, data) {
+    // On traite la mise à jour des stats si besoin
+    if (data.stats) {
+      const player = await prisma.player.findUnique({ where: { id: Number(id) } });
+      if (!player) throw new Error('Player not found');
+
+      await prisma.playerStats.update({
+        where: { id: player.statsId },
+        data: data.stats
+      });
     }
-  });
-};
 
-const update = async (id, data) => {
-  return await prisma.player.update({
-    where: { id },
-    data: {
-      firstName: data.firstName,
-      lastName: data.lastName,
-      category: data.category,
-      stats: data.stats,
-      photoUrl: data.photoUrl
-    }
-  });
-};
+    // Puis on update le joueur
+    return prisma.player.update({
+      where: { id: Number(id) },
+      data: {
+        firstName: data.firstName,
+        lastName: data.lastName,
+        category: data.category,
+        photoUrl: data.photoUrl,
+        licenseEnd: data.licenseEnd,
+      }
+    });
+  }
 
-const remove = async (id) => {
-  await prisma.player.delete({ where: { id } });
-};
+  static async deletePlayer(id) {
+    const player = await prisma.player.findUnique({ where: { id: Number(id) } });
+    if (!player) throw new Error('Player not found');
 
-const checkLicense = async (id) => {
-  const player = await prisma.player.findUnique({ where: { id } });
-  if (!player) throw new Error("Not found");
+    // Supprimer les stats associées
+    await prisma.playerStats.delete({ where: { id: player.statsId } });
+    // Supprimer le joueur
+    return prisma.player.delete({ where: { id: Number(id) } });
+  }
+}
 
-  const now = new Date();
-  const isValid = now < player.licenseEnd;
-
-  return {
-    valid: isValid,
-    expiresInDays: Math.ceil((player.licenseEnd - now) / (1000 * 3600 * 24))
-  };
-};
-
-const getTopByStat = async (statKey, limit = 5) => {
-  const players = await prisma.player.findMany();
-
-  const sorted = players
-    .map(p => ({
-      ...p,
-      statValue: Array.isArray(p.stats)
-        ? (p.stats.find(s => s.type === statKey)?.value || 0)
-        : 0
-    }))
-    .sort((a, b) => b.statValue - a.statValue)
-    .slice(0, limit);
-
-  return sorted;
-};
-
-export default {
-  getAll,
-  getOne,
-  create,
-  update,
-  remove,
-  checkLicense,
-  getTopByStat
-};
+export default PlayerService;
