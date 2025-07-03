@@ -1,0 +1,161 @@
+openapi: 3.0.0
+info:
+  title: Club de Basket API
+  description: API Express + Prisma pour la gestion d’un club de basketball (joueurs, équipements, entraînements, transports).
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:3000
+
+components:
+  schemas:
+    PlayerStats:
+      type: object
+      properties:
+        shoot: { type: integer }
+        dribble: { type: integer }
+        defense: { type: integer }
+        finish: { type: integer }
+        speed: { type: integer }
+        strength: { type: integer }
+        weight: { type: number }
+        jump: { type: integer }
+        iq: { type: integer }
+
+    Player:
+      type: object
+      properties:
+        id: { type: integer }
+        firstName: { type: string }
+        lastName: { type: string }
+        category: 
+          type: string
+          enum: [U10, U12, U14, U16, U18, U20, N1B, N1A, VETERAN, SENIOR]
+        statsId: { type: integer }
+        licenseEnd: { type: string, format: date-time }
+        photoUrl: { type: string }
+
+    Equipment:
+      type: object
+      properties:
+        id: { type: integer }
+        name: { type: string }
+        unitPrice: { type: number, format: float }
+        quantity: { type: integer }
+
+    Training:
+      type: object
+      properties:
+        id: { type: integer }
+        date: { type: string, format: date-time }
+        duration: { type: integer }
+        category:
+          type: string
+          enum: [U10, U12, U14, U16, U18, U20, N1B, N1A, VETERAN, SENIOR]
+        place: { type: string }
+
+    MaintenanceCost:
+      type: object
+      properties:
+        id: { type: integer }
+        description: { type: string }
+        cost: { type: number }
+        severity: { type: integer }
+
+    Transport:
+      type: object
+      properties:
+        id: { type: integer }
+        usageFrequency: { type: integer }
+        maintenanceCosts:
+          type: array
+          items: { $ref: '#/components/schemas/MaintenanceCost' }
+
+paths:
+  /players:
+    get:
+      summary: Liste des joueurs
+      responses:
+        200:
+          description: OK
+    post:
+      summary: Créer un joueur
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Player'
+      responses:
+        201:
+          description: Créé
+
+  /equipment:
+    get:
+      summary: Lister les équipements
+      responses:
+        200:
+          description: OK
+    post:
+      summary: Créer un équipement
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Equipment'
+      responses:
+        201:
+          description: Créé
+
+  /trainings:
+    get:
+      summary: Lister les entraînements
+      responses:
+        200:
+          description: OK
+    post:
+      summary: Créer un entraînement
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Training'
+      responses:
+        201:
+          description: Créé
+
+  /transports:
+    get:
+      summary: Liste des transports
+      responses:
+        200:
+          description: OK
+    post:
+      summary: Créer un transport
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                usageFrequency:
+                  type: integer
+      responses:
+        201:
+          description: Créé
+
+  /transports/{id}/rentability:
+    get:
+      summary: Calcul de rentabilité d’un transport
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Résultat de rentabilité
