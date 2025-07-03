@@ -7,45 +7,74 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum Category {
+  U10
+  U12
+  U14
+  U16
+  U18
+  U20
+  N1B
+  N1A
+  VETERAN
+  SENIOR
+}
+
 model Player {
-  id          Int           @id @default(autoincrement())
-  firstName   String
-  lastName    String
-  category    String
-  stats       Json          // Liste de statistiques sous forme de JSON
-  photoUrl    String?       // URL ou chemin vers la photo
-  licenseEnd  DateTime      // Date de fin de la licence (4 ans après création)
-  createdAt   DateTime      @default(now())
+  id         Int       @id @default(autoincrement())
+  firstName  String
+  lastName   String
+  category   Category
+  stats      PlayerStats @relation(fields: [statsId], references: [id])
+  statsId    Int @unique
+  photoUrl   String?
+  licenseEnd DateTime
+  createdAt  DateTime  @default(now())
+}
+
+model PlayerStats {
+  id           Int    @id @default(autoincrement())
+  shoot        Int    // 0 - 100
+  dribble      Int
+  defense      Int
+  finish       Int
+  speed        Int
+  strength     Int
+  weight       Float  // en kg
+  jump         Int
+  iq           Int    // intelligence de jeu
+  player       Player?
 }
 
 model Equipment {
-  id          Int      @id @default(autoincrement())
-  name        String
-  unitPrice   Float
-  quantity    Int
-  createdAt   DateTime @default(now())
+  id         Int     @id @default(autoincrement())
+  name       String
+  unitPrice  Decimal @db.Decimal(10, 2)
+  quantity   Int
+  createdAt  DateTime @default(now())
 }
 
 model Training {
-  id          Int      @id @default(autoincrement())
-  date        DateTime
-  duration    Int      // en minutes
-  category    String
-  createdAt   DateTime @default(now())
+  id         Int       @id @default(autoincrement())
+  date       DateTime
+  duration   Int        // en minutes
+  category   Category
+  createdAt  DateTime   @default(now())
 }
 
 model Transport {
-  id              Int               @id @default(autoincrement())
-  usageFrequency  Int              // ex : nombre d'utilisations par mois
-  maintenanceCosts MaintenanceCost[]
-  createdAt       DateTime         @default(now())
+  id                 Int                @id @default(autoincrement())
+  usageFrequency     Int               // nombre de fois par mois par exemple
+  maintenanceCosts   MaintenanceCost[]
+  createdAt          DateTime          @default(now())
 }
 
 model MaintenanceCost {
   id          Int      @id @default(autoincrement())
-  description String
-  cost        Float
-  severity    String   // faible, modérée, élevée
   transport   Transport @relation(fields: [transportId], references: [id])
   transportId Int
+  description String
+  cost        Decimal   @db.Decimal(10, 2)
+  severity    Int       // 1 = faible, 5 = critique
+  createdAt   DateTime  @default(now())
 }
