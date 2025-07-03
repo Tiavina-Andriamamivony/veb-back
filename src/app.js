@@ -4,7 +4,6 @@ import { PrismaClient } from "@prisma/client";
 
 import playerRoutes from "./routes/player.routes.js";
 // Ajoute les autres routes ici au fur et à mesure
-app.use('/players', playerRoutes);
 
 const app = express();
 const prisma = new PrismaClient();
