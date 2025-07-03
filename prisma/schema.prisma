@@ -59,6 +59,7 @@ model Training {
   date       DateTime
   duration   Int        // en minutes
   category   Category
+  place     String
   createdAt  DateTime   @default(now())
 }
 
