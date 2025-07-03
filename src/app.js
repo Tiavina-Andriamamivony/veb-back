@@ -4,6 +4,7 @@ import { PrismaClient } from "@prisma/client";
 import logger from './middlewares/logger.js';
 import equipmentRoutes from './routes/equipment.routes.js';
 import playerRoutes from "./routes/player.routes.js";
+import trainingRoutes from './routes/training.routes.js';
 // Ajoute les autres routes ici au fur et à mesure
 
 const app = express();
@@ -18,7 +19,7 @@ app.use(logger);
 app.use('/equipment', equipmentRoutes);
 // Routes
 app.use("/players", playerRoutes);
-
+app.use('/trainings', trainingRoutes);
 // Lancer le serveur
 const PORT =  3000;
 app.listen(PORT, () => {
