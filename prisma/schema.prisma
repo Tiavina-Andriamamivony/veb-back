@@ -1,0 +1,51 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Player {
+  id          Int           @id @default(autoincrement())
+  firstName   String
+  lastName    String
+  category    String
+  stats       Json          // Liste de statistiques sous forme de JSON
+  photoUrl    String?       // URL ou chemin vers la photo
+  licenseEnd  DateTime      // Date de fin de la licence (4 ans après création)
+  createdAt   DateTime      @default(now())
+}
+
+model Equipment {
+  id          Int      @id @default(autoincrement())
+  name        String
+  unitPrice   Float
+  quantity    Int
+  createdAt   DateTime @default(now())
+}
+
+model Training {
+  id          Int      @id @default(autoincrement())
+  date        DateTime
+  duration    Int      // en minutes
+  category    String
+  createdAt   DateTime @default(now())
+}
+
+model Transport {
+  id              Int               @id @default(autoincrement())
+  usageFrequency  Int              // ex : nombre d'utilisations par mois
+  maintenanceCosts MaintenanceCost[]
+  createdAt       DateTime         @default(now())
+}
+
+model MaintenanceCost {
+  id          Int      @id @default(autoincrement())
+  description String
+  cost        Float
+  severity    String   // faible, modérée, élevée
+  transport   Transport @relation(fields: [transportId], references: [id])
+  transportId Int
+}
