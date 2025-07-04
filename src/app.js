@@ -12,7 +12,10 @@ import transportRoutes from './routes/transport.routes.js';
 const app = express();
 
 // Middlewares
-app.use(cors());
+app.use(cors({
+  origin: '*'
+}));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use("/uploads", express.static("src/uploads")); // Serve photo
